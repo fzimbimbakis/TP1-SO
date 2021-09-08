@@ -1,7 +1,7 @@
 GCCFLAGS= -Wall -g -Wextra -Iinclude
 
 master: src/master.c
-	gcc $(GCCFLAGS) src/master.c -o bin/master
+	gcc $(GCCFLAGS) src/master.c -o ./bin/master
 
 slave: src/slave.c
 	gcc $(GCCFLAGS) src/slave.c -o bin/slave

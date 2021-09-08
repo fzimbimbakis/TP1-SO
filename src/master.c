@@ -4,6 +4,7 @@
 #include <sys/stat.h>
 #include <string.h>
  #include <sys/types.h>
+ #include <sys/wait.h>
 
 #define SLAVES 5
 #define STDIN 0
@@ -15,23 +16,33 @@
 int main(int argc, char const *argv[])
 {
 
-    
     int pipes[2];
     FILE * streams[2];
-
+    char eof=-1;
     pipe(pipes);
 
     streams[0]=fdopen(pipes[0], "r");
-    streams[0]=fdopen(pipes[1], "w");
+    streams[1]=fdopen(pipes[1], "w");
     
 
     int pid=fork();
+
     if(pid==0){
-        dup2(0, pipes[0]);
-        dup2(1, pipes[1]);
-        execv("./slave",NULL);
+        close(0);
+        dup2( pipes[0], 0);
+        //dup2(pipes[1], 1);
+        execv("./bin/slave", NULL);
     }
-    fprintf(streams[0],"Hola");
+
+    fprintf(streams[1],"Texto enviado desde master\n");
+    fprintf(streams[1], &eof), 
+    close(streams[0]);
+    fclose(streams[1]);
+    waitpid(pid, NULL, 0 );
+    char* string = NULL;
+    //getline(&string, 0, streams[0]);
+    //printf(string);
+    printf("Texto Master\n");
         
   /*  if(argc <= 1){
         perror("Debe ingresar los archivos por argumento");

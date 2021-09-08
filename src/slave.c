@@ -5,7 +5,10 @@
 int main(int argc, char const *argv[])
 {
     char* string = NULL;
-    getline(&string, 0 , stdin);
-    printf("%s", string);
+    int n=0;
+    printf("Texto Slave\n");
+    char c;
+    getline(&string, &n , stdin);
+    printf(string);
     return 0;
 }
