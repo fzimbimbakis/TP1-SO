@@ -1,15 +1,20 @@
-
 GCCFLAGS= -Wall -g -Wextra -Iinclude
 
+master: src/master.c
+	gcc $(GCCFLAGS) src/master.c -o bin/master
 
-all:
-gcc $(GCCFLAGS) src/naster.c -o bin/master
-gcc $(GCCFLAGS) src/slave.c -o bin/slave
-gcc $(GCCFLAGS) src/view.c -o bin/view
+slave: src/slave.c
+	gcc $(GCCFLAGS) src/slave.c -o bin/slave
 
+view: src/view.c
+	gcc $(GCCFLAGS) src/view.c -o bin/view
+
+
+
+all: master slave view
 
 clean:
-rm -f bin/* 
+	rm -f bin/*
 
 .PHONY: all clean
 
