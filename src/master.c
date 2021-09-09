@@ -7,7 +7,7 @@
 #include <sys/wait.h>
 #include <sys/time.h>
 
-#define SLAVES 5
+#define SLAVES 2
 #define STDIN 0
 #define STDOUT 1
 #define READ 0
@@ -16,64 +16,30 @@
 
 int main(int argc, char const *argv[])
 {
-//-------------------------------
-
-/*
-    int pipes[2];
-    int pipe2[2];
-    int len=0;
-    FILE * streams[2];
-    FILE * streams2[2];
-    char eof=-1;
-    pipe(pipes);
-    pipe(pipe2);
-
-    streams[0]=fdopen(pipes[0], "r");
-    streams[1]=fdopen(pipes[1], "w");
-    
-    streams2[0]=fdopen(pipe2[0], "r");
-    streams2[1]=fdopen(pipe2[1], "w");
-
-    int pid=fork();
-
-    if(pid==0){
-        close(0);
-        dup2( pipes[0], 0);
-        dup2(pipe2[1], 1);
-        execv("./bin/slave", NULL);
-    }
-
-    fprintf(streams[1],"Texto enviado desde master\n");
-   // fprintf(streams[1], &eof), 
-    close(streams[0]);
-    fclose(streams[1]);
-    waitpid(pid, NULL, 0 );
-    char* string = NULL;
-    getline(&string, &len, streams2[0]);
-    printf(string);
-    printf("Texto Master\n");
-    
-/*
-//--------------------------------------------------------
-//--------------------------------------------------------
-        
-    */
-    
     if(argc <= 1){
         perror("Debe ingresar los archivos por argumento");
         exit(5);
     }
 
-    int cant=argc;
+    int cantFiles=argc-1;
 
-    int mypipes[SLAVES*2][2];
+    int pipeFiles[SLAVES][2];
+    int pipeResults[SLAVES][2];
     int contador=0;
-    FILE* streams[SLAVES*2][2];
+    FILE* streamFiles[SLAVES][2];
+    FILE* streamResults[SLAVES][2];
 
-    while(contador < SLAVES*2){
-        pipe(mypipes[contador]);
-        streams[contador][READ] = fdopen(mypipes[contador][0], "r");
-        streams[contador][WRITE] = fdopen(mypipes[contador][1], "w");
+
+    while(contador < SLAVES){
+        pipe(pipeFiles[contador]);
+        pipe(pipeResults[contador]);
+
+        streamFiles[contador][READ] = fdopen(pipeFiles[contador][0], "r");
+        streamFiles[contador][WRITE] = fdopen(pipeFiles[contador][1], "w");
+
+        streamResults[contador][READ] = fdopen(pipeResults[contador][0], "r");
+        streamResults[contador][WRITE] = fdopen(pipeResults[contador][1], "w");
+
         contador++;
     }
     
@@ -94,15 +60,15 @@ int main(int argc, char const *argv[])
 
     contador=0;
     int pid;
-    while(contador < 2*SLAVES){
+    while(contador < SLAVES){
         pid=fork();
         if(pid==0){
-            dup2(mypipes[contador][0],STDIN);//hijo lee en 00
-            dup2(mypipes[contador+1][1],STDOUT);//hijo escribe en 11
+            dup2(pipeFiles[contador][0],STDIN);//hijo lee en 00
+            dup2(pipeResults[contador][1],STDOUT);//hijo escribe en 11
             execv("./bin/slave",NULL);
             perror("Fallo execv");
         }
-        contador+=2;
+        contador++;
     }
 
 
@@ -111,28 +77,32 @@ int main(int argc, char const *argv[])
     //               con todos los fclose al final del main.c            //
     //-------------------------------------------------------------------//
     contador=0;
-    while(contador < 2*SLAVES){
-        fprintf(streams[contador][1],"./a.cnf\n");
-        fclose(streams[contador][1]);
-        contador+=2;
+    int sentFiles=0;
+    while(contador < SLAVES && contador < cantFiles){
+        fprintf(streamFiles[contador][1],argv[++sentFiles]);
+        fprintf(streamFiles[contador][1],"\n");
+        fclose(streamFiles[contador][1]);
+        contador++;
     }
   
     fd_set currentFds, readyFds;
     FD_ZERO (&currentFds);
 
     contador=0;
-    while(contador<2*SLAVES){
-        FD_SET (mypipes[contador+1][0], &currentFds);//agego todos los fd que
-        contador+=2;                                //me interesa ver
+    while(contador<SLAVES){
+        FD_SET (pipeResults[contador][0], &currentFds);//agego todos los fd que
+        contador++;                                //me interesa ver
     }
 
     int len=0;
     char* string = NULL;
     contador=0;
 
-    while(contador<cant-1){//cant=cantidad de files para "minisatear"
+    while(contador<cantFiles){//cant=cantidad de files para "minisatear"
         readyFds=currentFds;//select me destruye el set, por eso uso un auxiliar
 
+        //printf("Select %d\n",contador);
+        
         if(select(FD_SETSIZE, &readyFds, NULL, NULL, NULL) < 0){
             perror("Error select");
             exit(1);
@@ -140,10 +110,22 @@ int main(int argc, char const *argv[])
         contador++;//lei un archivo correctamente, uno menos para ver
 
         //si llego hasta aca, entonces el select detecto algo
-        for(int i=0; i < 2*SLAVES; i++){    //pregunto por cada fd si esta en el set
-            if(FD_ISSET(mypipes[i][0], &readyFds)){
-                    getline(&string, &len, streams[i][0]);//le su buffer
+        int i;
+        for(i=0; i < SLAVES; i++){    //pregunto por cada fd si esta en el set
+            if(FD_ISSET(pipeResults[i][0], &readyFds)){
+                    getline(&string, &len, streamResults[i][0]);//le su buffer
                     printf("%d    %s", i, string);//imprimo salida
+/*--------------------------------------------------------------------------------------
+        Hay que ver como pasarle otro archivo al esclavo que ya termino de procesar
+
+                    if(sentFiles!=cantFiles){
+                        streamFiles[i][1] = fdopen(pipeFiles[i][1], "w");
+                        fprintf(streamFiles[i][1],argv[++sentFiles]);
+                        fprintf(streamFiles[i][1],"\n");
+                        fclose(streamFiles[i][1]);
+
+                    }
+---------------------------------------------------------------------------------------*/
                     break;//salteo las otras comparaciones, ya lei el que quiero
             }
         }
