@@ -32,12 +32,12 @@ int main(int argc, char const *argv[])
                 command = strncat(command, filePath, 256);
 
                 FILE *minisatFilePipe = popen(command, "r");
-                FILE *grepFilePipe = popen("grep -o \"UN.*\"", "w");
+                FILE *grepFilePipe = popen("grep -o -e \".*Number of.*[0-9]\\+\" -e \".*CPU time.*\" -e \".*SATISFIABLE\"", "w");
                 
                 
 
-                while(fscanf(minisatFilePipe, "%s\n", minisatLine)!=EOF){
-                    fprintf(grepFilePipe, "%s\n", minisatLine);
+                while(fgets(minisatLine, 256, minisatFilePipe)){
+                    fputs(minisatLine, grepFilePipe);
                 }
 
                 fclose(minisatFilePipe);
