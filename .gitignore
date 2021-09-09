@@ -10,3 +10,6 @@ bin/
 #Archivos Ocultos
 .*
 
+#Archivos para minisat
+*.cnf
+

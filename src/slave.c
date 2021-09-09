@@ -5,22 +5,26 @@
 int main(int argc, char const *argv[])
 {
      fclose(stderr);
+
      
             char *minisatLine = malloc(256);
            char *command = malloc(256);
            
            char *filePath;
+
            size_t len;
            ssize_t read;
     
     while (1) {
-                
+
                 filePath=NULL;
                 len=0;
                read = getline(&filePath, &len, stdin);
     
-               if(read==0 || read==-1){
+               if(read==0 || read==-1){ // EOF o Error
                    free(filePath);
+                   free(minisatLine);
+                   free(command); 
                    return read;
                }
 
@@ -31,6 +35,7 @@ int main(int argc, char const *argv[])
                 FILE *grepFilePipe = popen("grep -o \"UN.*\"", "w");
                 
                 
+
                 while(fscanf(minisatFilePipe, "%s\n", minisatLine)!=EOF){
                     fprintf(grepFilePipe, "%s\n", minisatLine);
                 }
