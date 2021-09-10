@@ -2,12 +2,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#define GREP_COMMAND "grep -o -e \".*Number of.*[0-9]\\+\" -e \".*CPU time.*\" -e \".*SATISFIABLE\""
+#define COMMAND_SINTAXIS "minisat "
+
 int main(int argc, char const *argv[])
 {
      fclose(stderr);
 
      
-            char *minisatLine = malloc(256);
+            char *commandOutputLine = malloc(256);
            char *command = malloc(256);
            
            char *filePath;
@@ -23,24 +27,24 @@ int main(int argc, char const *argv[])
     
                if(read==0 || read==-1){ // EOF o Error
                    free(filePath);
-                   free(minisatLine);
+                   free(commandOutputLine);
                    free(command); 
                    return read;
                }
 
-                strcpy(command, "minisat ");
+                strcpy(command, COMMAND_SINTAXIS);
                 command = strncat(command, filePath, 256);
 
-                FILE *minisatFilePipe = popen(command, "r");
-                FILE *grepFilePipe = popen("grep -o -e \".*Number of.*[0-9]\\+\" -e \".*CPU time.*\" -e \".*SATISFIABLE\"", "w");
+                FILE *commandFilePipe = popen(command, "r");
+                FILE *grepFilePipe = popen(GREP_COMMAND, "w");
                 
                 
 
-                while(fgets(minisatLine, 256, minisatFilePipe)){
-                    fputs(minisatLine, grepFilePipe);
+                while(fgets(commandOutputLine, 256, commandFilePipe)){
+                    fputs(commandOutputLine, grepFilePipe);
                 }
 
-                fclose(minisatFilePipe);
+                fclose(commandFilePipe);
                 fclose(grepFilePipe);
     }     
         return 0;
