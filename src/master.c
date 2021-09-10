@@ -16,6 +16,7 @@
 
 int main(int argc, char const *argv[])
 {
+    
     if(argc <= 1){
         perror("Debe ingresar los archivos por argumento");
         exit(5);
@@ -78,10 +79,14 @@ int main(int argc, char const *argv[])
     //-------------------------------------------------------------------//
     contador=0;
     int sentFiles=0;
+    int eof=-1;
     while(contador < SLAVES && contador < cantFiles){
         fprintf(streamFiles[contador][1],argv[++sentFiles]);
         fprintf(streamFiles[contador][1],"\n");
-        fclose(streamFiles[contador][1]);
+        //printf("antes de EOF\n");
+        //fprintf(streamFiles[contador][1],"\0");
+        //printf("despues de EOF\n");
+        fflush(streamFiles[contador][1]);
         contador++;
     }
   
@@ -107,25 +112,33 @@ int main(int argc, char const *argv[])
             perror("Error select");
             exit(1);
         }
+        
         contador++;//lei un archivo correctamente, uno menos para ver
 
         //si llego hasta aca, entonces el select detecto algo
         int i;
         for(i=0; i < SLAVES; i++){    //pregunto por cada fd si esta en el set
             if(FD_ISSET(pipeResults[i][0], &readyFds)){
-                    getline(&string, &len, streamResults[i][0]);//le su buffer
+
+                    //fgets(string, 1024, streamResults[i][0]);
+                    getline(&string, &len, streamResults[i][0]);//lee su buffer
                     printf("%d    %s", i, string);//imprimo salida
 /*--------------------------------------------------------------------------------------
-        Hay que ver como pasarle otro archivo al esclavo que ya termino de procesar
+        Hay que ver como pasarle otro archivo al esclavo que ya termino de procesar*/
 
                     if(sentFiles!=cantFiles){
-                        streamFiles[i][1] = fdopen(pipeFiles[i][1], "w");
+                        //printf("asdfjhsajdkfh\n");
+                        //streamFiles[i][1] = fdopen(pipeFiles[i][1], "w");
+                        //printf("open = %d\n",streamFiles[i][1]);
                         fprintf(streamFiles[i][1],argv[++sentFiles]);
+                       // printf("sssasdaasdf\n");
                         fprintf(streamFiles[i][1],"\n");
-                        fclose(streamFiles[i][1]);
+                        //fprintf(streamFiles[i][1], "\0");
+                        fflush(streamFiles[i][1]);
 
                     }
----------------------------------------------------------------------------------------*/
+
+/*---------------------------------------------------------------------------------------*/
                     break;//salteo las otras comparaciones, ya lei el que quiero
             }
         }
