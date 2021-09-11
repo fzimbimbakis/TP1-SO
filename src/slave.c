@@ -9,6 +9,7 @@
 
 int main(int argc, char const *argv[])
 {
+
      fclose(stderr);
     char *commandOutputLine = malloc(256);
     char *command = malloc(256);
@@ -19,10 +20,12 @@ int main(int argc, char const *argv[])
     while (1) {
                 filePath=NULL;
                 len=0;
-               read = getline(&filePath, &len, stdin);
+               // fclose(stdin);
+                read = getline(&filePath, &len, stdin);
                 
                // dprintf(1, " testt\n ");
                if(read==0 || read==-1){ // EOF o Error
+               
                    free(filePath);
                    free(commandOutputLine);
                    free(command);
@@ -56,7 +59,6 @@ int main(int argc, char const *argv[])
             //    printf("\t%s\n",filePath);
 
                 putchar('\n');
-
                //printf(salida);
     }
         return 0;

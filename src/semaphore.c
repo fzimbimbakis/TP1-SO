@@ -3,7 +3,7 @@
 sem_t * getSem_WR(){
     sem_t * sem = sem_open(SEM_NAME, O_CREAT, O_RDWR,0);
     if(sem == SEM_FAILED){
-        perror("sem_open RD");
+        perror("sem_open WR");
         return SEM_FAILED;
     }
     return sem;

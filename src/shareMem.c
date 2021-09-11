@@ -9,6 +9,7 @@ Gracias :)
 */
 
 #include "shareMem.h"
+//#include <errno.h>
 
 void * WR_shm(int qResults){
     int fd = shm_open(SHM_NAME, O_CREAT | O_RDWR, 0600); // Le saque el O_EXCL
@@ -26,8 +27,17 @@ void * WR_shm(int qResults){
 }
 
 void * RD_shm(int qResults){
-    int fd =shm_open(SHM_NAME, O_RDONLY, 0666);
-    
+    errno=0;
+    int fd =shm_open(SHM_NAME, O_CREAT | O_RDONLY, 0666);
+    /*switch(errno){
+        case ENOENT: printf("ENOENT"); break;
+        case AECCES: printf("ACCES"); break;
+        case EEXIST: printf("EXIST"); break;
+        case EINVAL: printf("INVAL"); break;
+        case EMFILE: printf("FILE"); break;
+        case ENAMETOOLONG: printf("NAMETOO"); break;
+        case ENFILE: printf("ENFILE"); break;
+    }*/
     if(fd<0){
         perror("smh_open() RD");
         return EXIT_FAILURE;

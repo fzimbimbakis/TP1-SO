@@ -3,13 +3,23 @@
 
 int main(int argc, char const *argv[])
 {
+
     if(argc <= 1){
         perror("Debe ingresar los archivos por argumento");
         exit(5);
     }
+    
+
 
     int cantFiles=argc-1;
+        // SHM start
+    char * data = WR_shm(cantFiles);
+     // Semaphore start
+    sem_t * sem = getSem_WR();
     int contador=0;
+    printf("%d\n", cantFiles);
+
+   
 
     int pipeFiles[SLAVES][2];
     int pipeResults[SLAVES][2];
@@ -40,6 +50,11 @@ int main(int argc, char const *argv[])
     while(contador < SLAVES){
         pid=fork();
         if(pid==0){
+            int j=0;
+            while(j<SLAVES){
+                close(pipeFiles[j][1]);
+                j++;
+            }
             dup2(pipeFiles[contador][0],STDIN);//hijo lee en 00
             dup2(pipeResults[contador][1],STDOUT);//hijo escribe en 11
             execv("./bin/slave",NULL);
@@ -73,14 +88,8 @@ int main(int argc, char const *argv[])
     char* string =NULL;
     contador=0;
 
-    // SHM start
-    char * data = WR_shm(cantFiles);
-    printf("%d\n", cantFiles);
 
-    // Semaphore start
-    sem_t * sem = getSem_WR();
-
-    printf("8 segundos para llamar a view.\n");
+   // printf("8 segundos para llamar a view.\n");
     sleep(8);
 
     while(contador<cantFiles){//cant=cantidad de files para "minisatear"
@@ -117,7 +126,9 @@ int main(int argc, char const *argv[])
     }
 
     contador=0;
+    char eof[3]={EOF, '\n', 0};
     while(contador < SLAVES){
+        fprintf(streamFiles[contador][1], eof);
 
         close(pipeFiles[contador][0]);
         close(pipeFiles[contador][1]);
@@ -139,10 +150,12 @@ int main(int argc, char const *argv[])
 
     // SHM finish
     munmapShm(data, cantFiles);
-    unlinkShm();
+    //wait(NULL);
+    //unlinkShm();
 
     // Semaphore finish
-    unlinkSem(sem);
+   // unlinkSem(sem);
+   // perror("master\n");
 
     return 0;
 }
