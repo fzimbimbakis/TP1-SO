@@ -4,7 +4,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#define GREP_COMMAND "grep -o -e \".*Number of.*[0-9]\\+\" -e \".*CPU time.*\" -e \".*SATISFIABLE\" | sed 's/|  //'"
+#define GREP_COMMAND "grep -o -e \".*Number of.*[0-9]\\+\" -e \".*CPU time.*\" -e \".*SATISFIABLE\" | sed 's/|  //' | tr '\n' '\t'"
 #define COMMAND_SINTAXIS "minisat "
 
 int main(int argc, char const *argv[])
@@ -21,7 +21,7 @@ int main(int argc, char const *argv[])
                 len=0;
                read = getline(&filePath, &len, stdin);
                 
-
+               // dprintf(1, " testt\n ");
                if(read==0 || read==-1){ // EOF o Error
                    free(filePath);
                    free(commandOutputLine);
@@ -36,10 +36,10 @@ int main(int argc, char const *argv[])
                 FILE *commandFilePipe = popen(command, "r");
                 FILE *grepFilePipe = popen(GREP_COMMAND, "w");
 
-                //printf("Pid: %d\n%s", getpid(), filePath);
 
-               
+               int i =0;
                 while(fgets(commandOutputLine, 256, commandFilePipe)){
+                    //printf("i= %d\n", i++);
                     fputs(commandOutputLine, grepFilePipe);
                 }
                 
@@ -49,7 +49,8 @@ int main(int argc, char const *argv[])
 
                 pclose(commandFilePipe);
                 pclose(grepFilePipe);
-
+                dprintf(1, "Pid: %d\t%s", getpid(), filePath);
+                //printf("%d", grepFilePipe);
             //     printf("\t%d",getpid());
 
             //    printf("\t%s\n",filePath);

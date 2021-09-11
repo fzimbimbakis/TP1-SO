@@ -117,17 +117,18 @@ int main(int argc, char const *argv[])
         for(i=0; i < SLAVES; i++){    //pregunto por cada fd si esta en el set
             if(FD_ISSET(pipeResults[i][0], &readyFds)){
                 int k=0;
-                while(k<4){
+               // while(k<6){
                     getline(&string, &len, streamResults[i][0]);
                     printf("%s",string);//imprimo salida
                     k++;
-                }
+              //  }
                     
                     if(sentFiles!=cantFiles){
                         fprintf(streamFiles[i][1],argv[++sentFiles]);
                         fprintf(streamFiles[i][1],"\n");
                         fflush(streamFiles[i][1]);
                     }
+                    printf("-------------------------\n");
                     break;//salteo las otras comparaciones, ya lei el que quiero
             }
         }
