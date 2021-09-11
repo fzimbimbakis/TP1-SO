@@ -18,11 +18,11 @@ Gracias :)
 #include <unistd.h>
 
 #define SHM_NAME "/shmem"
-#define SIZE 256
+#define RESULT_SIZE 256
 
-void * WR_shm();
-void * RD_shm();
-void munmapShm(void * data);
+void * WR_shm(int qResults);
+void * RD_shm(int qResults);
+void munmapShm(void * data, int qResults);
 void unlinkShm();
 
 #endif
