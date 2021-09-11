@@ -1,17 +1,4 @@
-#include <stdio.h>
-#include <dirent.h>
-#include <unistd.h>
-#include <sys/stat.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <sys/time.h>
-
-#define SLAVES 2
-#define STDIN 0
-#define STDOUT 1
-#define READ 0
-#define WRITE 1
+#include "master.h"
 
 
 int main(int argc, char const *argv[])
@@ -22,10 +9,10 @@ int main(int argc, char const *argv[])
     }
 
     int cantFiles=argc-1;
+    int contador=0;
 
     int pipeFiles[SLAVES][2];
     int pipeResults[SLAVES][2];
-    int contador=0;
     FILE* streamFiles[SLAVES][2];
     FILE* streamResults[SLAVES][2];
 
@@ -46,16 +33,6 @@ int main(int argc, char const *argv[])
     /*
         pipe1   [r] [w]     master WRITE en 1, slave READ 0, fprintf(stream[0][1]) --> slave lee getline()
         pipe2   [r] [w]     slave WRITE en 1,  master WRITE 1, slave escribe printf()--> master lee por stream[1][0]
-
-        pipe3   [r] [w]
-        pipe4   [r] [w]
-
-        pipe5   [r] [w]
-        pipe6   [r] [w]
-
-        pipe7   [r] [w]
-        pipe8   [r] [w]
-
     */
 
     contador=0;
@@ -72,10 +49,6 @@ int main(int argc, char const *argv[])
     }
 
 
-    //-------------------------------------------------------------------//
-    //esto no deberia estar, vamos a mandar los files en el while(i<cant)//
-    //               con todos los fclose al final del main.c            //
-    //-------------------------------------------------------------------//
     contador=0;
     int sentFiles=0;
 
@@ -100,6 +73,16 @@ int main(int argc, char const *argv[])
     char* string =NULL;
     contador=0;
 
+    // SHM start
+    char * data = WR_shm(cantFiles);
+    printf("%d\n", cantFiles);
+
+    // Semaphore start
+    sem_t * sem = getSem_WR();
+
+    printf("8 segundos para llamar a view.\n");
+    sleep(8);
+
     while(contador<cantFiles){//cant=cantidad de files para "minisatear"
         readyFds=currentFds;//select me destruye el set, por eso uso un auxiliar
 
@@ -116,19 +99,16 @@ int main(int argc, char const *argv[])
         int i;
         for(i=0; i < SLAVES; i++){    //pregunto por cada fd si esta en el set
             if(FD_ISSET(pipeResults[i][0], &readyFds)){
-                int k=0;
-               // while(k<6){
+                
                     getline(&string, &len, streamResults[i][0]);
-                    printf("%s",string);//imprimo salida
-                    k++;
-              //  }
-                    
+                    sprintf(data, "%s", string);
+                    data += RESULT_SIZE;
+                    sem_post(sem);
                     if(sentFiles!=cantFiles){
                         fprintf(streamFiles[i][1],argv[++sentFiles]);
                         fprintf(streamFiles[i][1],"\n");
                         fflush(streamFiles[i][1]);
                     }
-                    printf("-------------------------\n");
                     break;//salteo las otras comparaciones, ya lei el que quiero
             }
         }
@@ -157,17 +137,12 @@ int main(int argc, char const *argv[])
         contador++;
     }
 
+    // SHM finish
+    munmapShm(data, cantFiles);
+    unlinkShm();
 
-
+    // Semaphore finish
+    unlinkSem(sem);
 
     return 0;
 }
-
-
-/*
-h1-f1--------------
-h2-f2------
-h3-f3-   f4--------
-
-
-*/

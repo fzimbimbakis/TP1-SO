@@ -11,7 +11,7 @@ Gracias :)
 #include "shareMem.h"
 
 void * WR_shm(int qResults){
-    int fd = shm_open(SHM_NAME, O_CREAT | O_EXCL | O_RDWR, 0600);
+    int fd = shm_open(SHM_NAME, O_CREAT | O_RDWR, 0600); // Le saque el O_EXCL
 
     if(fd<0){
         perror("smh_open() WR");
@@ -26,7 +26,7 @@ void * WR_shm(int qResults){
 }
 
 void * RD_shm(int qResults){
-    int fd =shm_open(SHM_NAME, O_RDONLY, 066);
+    int fd =shm_open(SHM_NAME, O_RDONLY, 0666);
     
     if(fd<0){
         perror("smh_open() RD");
