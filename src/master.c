@@ -16,7 +16,6 @@
 
 int main(int argc, char const *argv[])
 {
-    
     if(argc <= 1){
         perror("Debe ingresar los archivos por argumento");
         exit(5);
@@ -79,13 +78,11 @@ int main(int argc, char const *argv[])
     //-------------------------------------------------------------------//
     contador=0;
     int sentFiles=0;
-    int eof=-1;
+
     while(contador < SLAVES && contador < cantFiles){
         fprintf(streamFiles[contador][1],argv[++sentFiles]);
         fprintf(streamFiles[contador][1],"\n");
-        //printf("antes de EOF\n");
-        //fprintf(streamFiles[contador][1],"\0");
-        //printf("despues de EOF\n");
+
         fflush(streamFiles[contador][1]);
         contador++;
     }
@@ -100,7 +97,7 @@ int main(int argc, char const *argv[])
     }
 
     int len=0;
-    char* string = NULL;
+    char* string =NULL;
     contador=0;
 
     while(contador<cantFiles){//cant=cantidad de files para "minisatear"
@@ -119,63 +116,48 @@ int main(int argc, char const *argv[])
         int i;
         for(i=0; i < SLAVES; i++){    //pregunto por cada fd si esta en el set
             if(FD_ISSET(pipeResults[i][0], &readyFds)){
-
-                    //fgets(string, 1024, streamResults[i][0]);
-                    getline(&string, &len, streamResults[i][0]);//lee su buffer
-                    printf("%d    %s", i, string);//imprimo salida
-/*--------------------------------------------------------------------------------------
-        Hay que ver como pasarle otro archivo al esclavo que ya termino de procesar*/
-
+                int k=0;
+                while(k<4){
+                    getline(&string, &len, streamResults[i][0]);
+                    printf("%s",string);//imprimo salida
+                    k++;
+                }
+                    
                     if(sentFiles!=cantFiles){
-                        //printf("asdfjhsajdkfh\n");
-                        //streamFiles[i][1] = fdopen(pipeFiles[i][1], "w");
-                        //printf("open = %d\n",streamFiles[i][1]);
                         fprintf(streamFiles[i][1],argv[++sentFiles]);
-                       // printf("sssasdaasdf\n");
                         fprintf(streamFiles[i][1],"\n");
-                        //fprintf(streamFiles[i][1], "\0");
                         fflush(streamFiles[i][1]);
-
                     }
-
-/*---------------------------------------------------------------------------------------*/
                     break;//salteo las otras comparaciones, ya lei el que quiero
             }
         }
-        /*
-        for(int i=0; i < FD_SETSIZE; i++){
-            if(FD_ISSET(i, &readyFds)){
-                if (i==mypipes[1][0]){
-                    getline(&string, &len, streams[1][0]);
-                    printf(string);
-                }
-                else if (i==mypipes[3][0]) {
-                    getline(&string, &len, streams[3][0]);
-                    printf(string);}
-                else if (i==mypipes[5][0]) {
-                    getline(&string, &len, streams[5][0]);
-                    printf(string);}
-                else if (i==mypipes[7][0]) {
-                    getline(&string, &len, streams[7][0]);
-                    printf(string);}
-                else if (i==mypipes[9][0]) {
-                    getline(&string, &len, streams[9][0]);
-                    printf(string);}
-                else printf("%d\n", i);
-            }
-        }
-*/
-
-/*
-        for (int i = 0; i < 2*SLAVES; i+=2){
-            if(FD_ISSET(mypipes[i][0], &readyFds)){
-                getline(&string, &len, streams[i][0]);
-                printf(string);
-            }
-        }
-*/
+      
 
     }
+
+    contador=0;
+    while(contador < SLAVES){
+
+        close(pipeFiles[contador][0]);
+        close(pipeFiles[contador][1]);
+
+        close(pipeResults[contador][0]);
+        close(pipeResults[contador][1]);
+        
+        
+        
+        
+        fclose(streamFiles[contador][0]); //lee slave
+        fclose(streamFiles[contador][1]); //escribe master
+
+        fclose(streamResults[contador][0]);  //lee master
+        fclose(streamResults[contador][1]); //escribe slave
+
+        contador++;
+    }
+
+
+
 
     return 0;
 }

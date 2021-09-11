@@ -1,4 +1,0 @@
-|  Number of variables:           100
-|  Number of clauses:             430
-CPU time              : 0 s
-UNSATISFIABLE
