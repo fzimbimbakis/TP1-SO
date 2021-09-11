@@ -2,37 +2,46 @@
 
 Código tomado parcialmente del siguiente link.
 
-https://www.geeksforgeeks.org/posix-shared-memory-api/
+https://linuxhint.com/posix-shared-memory-c-programming/
+
+Gracias :)
 
 */
+
 #include "shareMem.h"
 
+void * WR_shm(){
+    int fd = shm_open(SHM_NAME, O_CREAT | O_EXCL | O_RDWR, 0600);
 
+    if(fd<0){
+        perror("smh_open() WR");
+        return EXIT_FAILURE;
+    }
 
-void * open_WR_SHM(){
+    ftruncate(fd, SIZE);
 
-    int fd = shm_open(FILE_PATH, O_CREAT | O_RDWR, 0666);       // 666? !!!!!!!!!!!!!
-    if(ERROR_CODE == fd)
-        return (void *) ERROR_CODE;
-    
-    ftruncate(fd, BLOCK_SIZE);
-    
-    return mmap(NULL, BLOCK_SIZE, PROT_WRITE, MAP_SHARED, fd, 0);
+    int * data = mmap(0, SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    close(fd);
+    return data;
 }
 
-void * open_RD_SHM(){
-
-    int fd = shm_open(FILE_PATH, O_RDONLY, 0666);       // 666? !!!!!!!!!!!!!   Hace falta un O_CREAT?
-    if(ERROR_CODE == fd)
-        return (void *) ERROR_CODE;
+void * RD_shm(){
+    int fd =shm_open(SHM_NAME, O_RDONLY, 066);
     
-    ftruncate(fd, BLOCK_SIZE);
+    if(fd<0){
+        perror("smh_open() RD");
+        return EXIT_FAILURE;
+    }
 
-    return mmap(NULL, BLOCK_SIZE, PROT_READ, MAP_SHARED, fd, 0);
+    int * data= mmap(0, SIZE, PROT_READ, MAP_SHARED, fd, 0);
+    close(fd);
+    return data;
 }
 
-void unlink_SHM(){
-    shm_unlink(FILE_PATH);
+void munmapShm(void * data){
+    munmap(data, SIZE);
 }
 
-
+void unlinkShm(){
+    shm_unlink(SHM_NAME);
+}
