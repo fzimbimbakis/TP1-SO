@@ -28,6 +28,6 @@ int main(int argc, char const *argv[])
         data += RESULT_SIZE;
 
     }
-    
+    munmapShm(data, qResults);
     return 0;
 }
