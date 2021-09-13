@@ -35,7 +35,7 @@ int main(int argc, char *argv[])
 
     }
 
-    unlinkSem(sem);
+    //unlinkSem(sem);
     
     munmapShm(aux, qResults);
     unlinkShm();

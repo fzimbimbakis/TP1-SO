@@ -28,8 +28,11 @@ int main(int argc, char const *argv[])
     char * data = WR_shm(name, cantFiles);
         if((void *) -1 == data)
         return EXIT_FAILURE;
+
     void * aux = data;
     data += sizeof(int);
+    FILE* resultsFd=fopen("results.txt","w");
+
     
     
     initPipesStreams();
@@ -72,7 +75,7 @@ int main(int argc, char const *argv[])
 
 
    // printf("8 segundos para llamar a view.\n");
-    sleep(8);
+    //sleep(8);
 
     while(contador<cantFiles){//cant=cantidad de files para "minisatear"
         readyFds=currentFds;//select me destruye el set, por eso uso un auxiliar
@@ -95,6 +98,7 @@ int main(int argc, char const *argv[])
                     sprintf(data, "%s", string);
                     data += RESULT_SIZE;
                     sem_post(sem);
+                    fprintf(resultsFd, string);
                     if(sentFiles!=cantFiles){
                         fprintf(streamFiles[i][1],argv[++sentFiles]);
                         fprintf(streamFiles[i][1],"\n");
@@ -105,9 +109,13 @@ int main(int argc, char const *argv[])
         }
     }
 
+    free(string);
+
 
 
     closePipesStreams(SLAVES);
+
+    fclose(resultsFd);
 
 
     // SHM finish
@@ -115,7 +123,7 @@ int main(int argc, char const *argv[])
     //unlinkShm();
 
     // Semaphore finish
-   // unlinkSem(sem);
+    //unlinkSem(sem);
    // perror("master\n");
 
     return 0;
