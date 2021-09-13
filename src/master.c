@@ -22,6 +22,8 @@ int main(int argc, char const *argv[])
     char * data = WR_shm(cantFiles);
         if((void *) -1 == data)
         return EXIT_FAILURE;
+
+    FILE* resultsFd=fopen("results.txt","w");
     
     
     initPipesStreams();
@@ -87,6 +89,7 @@ int main(int argc, char const *argv[])
                     sprintf(data, "%s", string);
                     data += RESULT_SIZE;
                     sem_post(sem);
+                    fprintf(resultsFd, string);
                     if(sentFiles!=cantFiles){
                         fprintf(streamFiles[i][1],argv[++sentFiles]);
                         fprintf(streamFiles[i][1],"\n");
@@ -100,6 +103,8 @@ int main(int argc, char const *argv[])
 
 
     closePipesStreams(SLAVES);
+
+    fclose(resultsFd);
 
 
     // SHM finish
