@@ -17,12 +17,12 @@ Gracias :)
 #include <sys/mman.h>
 #include <unistd.h>
 
-#define SHM_NAME "/shmem"
+
 #define RESULT_SIZE 256
 
-void * WR_shm(int qResults);
-void * RD_shm(int qResults);
+void * WR_shm(char * name, int qResults);
+void * RD_shm(char * name, int * qResults);
 void munmapShm(void * data, int qResults);
-void unlinkShm();
+void unlinkShm(char * name);
 
 #endif
