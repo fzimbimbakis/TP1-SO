@@ -10,3 +10,12 @@ bin/
 #Archivos Ocultos
 .*
 
+#Archivos para minisat
+*.cnf
+
+#Archivos .txt
+*.txt
+
+*.log
+*.tasks
+strace_out

@@ -1,17 +1,16 @@
-GCCFLAGS= -Wall -g -Wextra -Iinclude
+GCC_FLAGS= -Wall -g -Wextra -I ./include
+SHMEM_SEM_FLAGS=-lrt -pthread
+all: master slave view
 
 master: src/master.c
-	gcc $(GCCFLAGS) src/master.c -o bin/master
+	gcc $(GCC_FLAGS) $(SHMEM_SEM_FLAGS) src/semaphore.c src/shareMem.c src/master.c -o bin/master
 
 slave: src/slave.c
-	gcc $(GCCFLAGS) src/slave.c -o bin/slave
+	gcc $(GCC_FLAGS) src/slave.c -o bin/slave
 
 view: src/view.c
-	gcc $(GCCFLAGS) src/view.c -o bin/view
+	gcc $(GCC_FLAGS) $(SHMEM_SEM_FLAGS) src/semaphore.c src/shareMem.c src/view.c -o bin/view
 
-
-
-all: master slave view
 
 clean:
 	rm -f bin/*
