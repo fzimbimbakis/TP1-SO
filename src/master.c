@@ -17,7 +17,6 @@ int main(int argc, char const *argv[])
         exit(5);
     }
     int cantFiles=argc-1;
-    
     // SHM start
     char * data = WR_shm(cantFiles);
         if((void *) -1 == data)
@@ -34,8 +33,11 @@ int main(int argc, char const *argv[])
 
     // Semaphore start
     sem_t * sem = getSem_WR();
-        if(sem==SEM_FAILED)
+    if(sem==SEM_FAILED){
+        closePipesStreams(SLAVES);
+        fclose(resultsFd);
         return EXIT_FAILURE;
+    }
     
     printf("%d\n", cantFiles);
 
@@ -66,7 +68,7 @@ int main(int argc, char const *argv[])
 
 
    // printf("8 segundos para llamar a view.\n");
-    sleep(8);
+    //sleep(8);
 
     while(contador<cantFiles){//cant=cantidad de files para "minisatear"
         readyFds=currentFds;//select me destruye el set, por eso uso un auxiliar
@@ -149,9 +151,7 @@ void initPipesStreams(){
 
 void closePipesStreams(int qSlaves){
     int contador=0;
-    char eof[3]={EOF, '\n', 0};
     while(contador < qSlaves){
-        fprintf(streamFiles[contador][1], eof);
 
         close(pipeFiles[contador][0]);
         close(pipeFiles[contador][1]);
@@ -171,24 +171,6 @@ void closePipesStreams(int qSlaves){
         contador++;
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 void runSlaves(int qSlaves){
     int contador=0;
