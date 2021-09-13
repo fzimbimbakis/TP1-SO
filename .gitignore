@@ -13,3 +13,6 @@ bin/
 #Archivos para minisat
 *.cnf
 
+#Archivos .txt
+*.txt
+

@@ -1,4 +1,0 @@
-Number of variables:            42	Number of clauses:             133	CPU time              : 0.006679 s	UNSATISFIABLE	Pid: 263	a.cnf
-Number of variables:            56	Number of clauses:             204	CPU time              : 0.062065 s	UNSATISFIABLE	Pid: 264	hole7.cnf
-Number of variables:            72	Number of clauses:             297	CPU time              : 0.372523 s	UNSATISFIABLE	Pid: 263	hole8.cnf
-Number of variables:            90	Number of clauses:             415	CPU time              : 7.61099 s	UNSATISFIABLE	Pid: 264	hole9.cnf
