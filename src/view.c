@@ -1,17 +1,22 @@
 #include "shareMem.h"
 #include "semaphore.h"
 #include <string.h>
-int main(int argc, char const *argv[])
+int main(int argc, char *argv[])
 {   
-    int qResults;
+    char * name;
     if(argc > 1){
-        qResults = atoi(argv[1]);
+        name = argv[1];
     } else{
-        scanf("%d", &qResults);
+        name = malloc(256);
+        scanf("%s", name);
     }
     
     // Share Mem.
-    char * data = (char *) RD_shm(qResults);
+    int qResults;
+    char * data = (char *) RD_shm(name, &qResults);
+    void * aux = (void *) data;
+    data += sizeof(int);
+
     if(data==(void *)-1) 
         return EXIT_FAILURE;
 
@@ -25,14 +30,14 @@ int main(int argc, char const *argv[])
     {
         sem_wait(sem);
 
-        printf("%s", data);
+        printf(data);
         data += RESULT_SIZE;
 
     }
 
     unlinkSem(sem);
     
-    munmapShm(data, qResults);
+    munmapShm(aux, qResults);
     unlinkShm();
 
     return 0;

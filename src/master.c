@@ -19,9 +19,17 @@ int main(int argc, char const *argv[])
     int cantFiles=argc-1;
     
     // SHM start
-    char * data = WR_shm(cantFiles);
+    // https://stackoverflow.com/questions/8257714/how-to-convert-an-int-to-string-in-c
+    int pid = getpid();
+    int length = snprintf( NULL, 0, "/%d", pid );
+    char* name = malloc( length + 1 );
+    snprintf( name, length + 1, "/%d",  pid);
+
+    char * data = WR_shm(name, cantFiles);
         if((void *) -1 == data)
         return EXIT_FAILURE;
+    void * aux = data;
+    data += sizeof(int);
     
     
     initPipesStreams();
@@ -35,7 +43,7 @@ int main(int argc, char const *argv[])
         if(sem==SEM_FAILED)
         return EXIT_FAILURE;
     
-    printf("%d\n", cantFiles);
+    printf("%s\n", name);
 
     //fileResultsExchange(SLAVES, cantFiles, sem, data, argv);
     int contador=0;
@@ -103,7 +111,7 @@ int main(int argc, char const *argv[])
 
 
     // SHM finish
-    munmapShm(data, cantFiles);
+    munmapShm(aux, cantFiles);
     //unlinkShm();
 
     // Semaphore finish
