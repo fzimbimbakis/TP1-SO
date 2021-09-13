@@ -16,3 +16,6 @@ bin/
 #Archivos .txt
 *.txt
 
+*.log
+*.tasks
+strace_out

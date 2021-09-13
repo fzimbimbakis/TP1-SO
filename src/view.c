@@ -1,3 +1,5 @@
+// This is a personal academic project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #include "shareMem.h"
 #include "semaphore.h"
 #include <string.h>
@@ -7,8 +9,14 @@ int main(int argc, char *argv[])
     if(argc > 1){
         name = argv[1];
     } else{
+        int i =0;
         name = malloc(256);
-        scanf("%s", name);
+        if(name==NULL) return EXIT_FAILURE;
+        char c;
+        while((c=getchar())!='\n' && i<256){
+            name[i]=c;
+            i++;
+        }
     }
     
     // Share Mem.
@@ -21,7 +29,7 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
 
     // Semaphore
-    sem_t * sem = getSem_RD();
+    sem_t * sem = getSem_RD(name);
     if(sem==SEM_FAILED) 
         return EXIT_FAILURE;
     
@@ -30,7 +38,7 @@ int main(int argc, char *argv[])
     {
         sem_wait(sem);
 
-        printf(data);
+        printf("%s", data);
         data += RESULT_SIZE;
 
     }

@@ -1,3 +1,5 @@
+// This is a personal academic project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #include "master.h"
 void initPipesStreams();
 void closePipesStreams(int qSlaves);
@@ -22,6 +24,10 @@ int main(int argc, char const *argv[])
     int pid = getpid();
     int length = snprintf( NULL, 0, "/%d", pid );
     char* name = malloc( length + 1 );
+    if(name==NULL){
+        perror("malloc error");
+        return EXIT_FAILURE;
+    }
     snprintf( name, length + 1, "/%d",  pid);
 
     char * data = WR_shm(name, cantFiles);
@@ -31,6 +37,10 @@ int main(int argc, char const *argv[])
     void * aux = data;
     data += sizeof(int);
     FILE* resultsFd=fopen("results.txt","w");
+    if(resultsFd==NULL){
+        perror("results.txt error");
+        return EXIT_FAILURE;
+    }
 
     
     
@@ -41,7 +51,7 @@ int main(int argc, char const *argv[])
     
 
     // Semaphore start
-    sem_t * sem = getSem_WR();
+    sem_t * sem = getSem_WR(name);
     if(sem==SEM_FAILED){
         closePipesStreams(SLAVES);
         fclose(resultsFd);
@@ -55,7 +65,7 @@ int main(int argc, char const *argv[])
     int sentFiles=0;
 
     while(contador < SLAVES && contador < cantFiles){
-        fprintf(streamFiles[contador][1],argv[++sentFiles]);
+        fprintf(streamFiles[contador][1],"%s", argv[++sentFiles]);
         fprintf(streamFiles[contador][1],"\n");
 
         fflush(streamFiles[contador][1]);
@@ -100,9 +110,9 @@ int main(int argc, char const *argv[])
                     sprintf(data, "%s", string);
                     data += RESULT_SIZE;
                     sem_post(sem);
-                    fprintf(resultsFd, string);
+                    fprintf(resultsFd, "%s", string);
                     if(sentFiles!=cantFiles){
-                        fprintf(streamFiles[i][1],argv[++sentFiles]);
+                        fprintf(streamFiles[i][1], "%s", argv[++sentFiles]);
                         fprintf(streamFiles[i][1],"\n");
                         fflush(streamFiles[i][1]);
                     }
@@ -113,7 +123,7 @@ int main(int argc, char const *argv[])
 
     free(string);
 
-
+    //sleep(5);
 
     closePipesStreams(SLAVES);
 
@@ -122,9 +132,11 @@ int main(int argc, char const *argv[])
 
     // SHM finish
     munmapShm(aux, cantFiles);
+    free(name);
     //unlinkShm();
 
     // Semaphore finish
+    sem_close(sem);
     //unlinkSem(sem);
    // perror("master\n");
 
@@ -183,14 +195,16 @@ void closePipesStreams(int qSlaves){
 
 void runSlaves(int qSlaves){
     int contador=0;
-    int pid;
     char * newargs = {NULL};
     while(contador < qSlaves){
+        int pid;
         pid=fork();
         if(pid==0){
             int j=0;
             while(j<qSlaves){
                 close(pipeFiles[j][1]);
+                //fclose(streamFiles[j][1]);
+                //fclose(streamResults[j][1]);
                 j++;
             }
             dup2(pipeFiles[contador][0],STDIN);//hijo lee en 00

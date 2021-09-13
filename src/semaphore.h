@@ -7,8 +7,8 @@
 #include <sys/stat.h>        /* For mode constants */
 #include <semaphore.h>
 #include <stdio.h>
-sem_t * getSem_WR();
-sem_t * getSem_RD();
+sem_t * getSem_WR(char* name);
+sem_t * getSem_RD(char* name);
 void unlinkSem(sem_t * sem);
 
 

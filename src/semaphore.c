@@ -1,7 +1,9 @@
+// This is a personal academic project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #include "semaphore.h"      // ojota si se rompe por mismo nombre
 
-sem_t * getSem_WR(){
-    sem_t * sem = sem_open(SEM_NAME, O_CREAT, O_RDWR,0);
+sem_t * getSem_WR(char* name){
+    sem_t * sem = sem_open(name, O_CREAT, O_RDWR,0);
     if(sem == SEM_FAILED){
         perror("sem_open WR");
         return SEM_FAILED;
@@ -9,9 +11,9 @@ sem_t * getSem_WR(){
     return sem;
 }
 
-sem_t * getSem_RD(){
+sem_t * getSem_RD(char* name){
     
-    sem_t * sem = sem_open(SEM_NAME, O_CREAT);     // Podría llegar a pasar que lo inicie primero RD?
+    sem_t * sem = sem_open(name, O_CREAT);     // Podría llegar a pasar que lo inicie primero RD?
     
     if(sem == SEM_FAILED){
         perror("sem_open RD");

@@ -1,3 +1,5 @@
+// This is a personal academic project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #include <sys/types.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,12 +14,21 @@ int main()
 
      fclose(stderr);
     char *commandOutputLine = malloc(256);
+    if(commandOutputLine==NULL){
+        perror("Malloc error");
+        return -1;
+    }
     char *command = malloc(256);
+    if(command==NULL){
+        free(commandOutputLine);
+        perror("Malloc error");
+        return -1;
+    }
     char *filePath;
 
     size_t len;
-    ssize_t read;
     while (1) {
+                ssize_t read;
                 filePath=NULL;
                 len=0;
             
