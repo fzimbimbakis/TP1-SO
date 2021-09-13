@@ -100,6 +100,8 @@ int main(int argc, char const *argv[])
         }
     }
 
+    free(string);
+
 
 
     closePipesStreams(SLAVES);
@@ -112,7 +114,7 @@ int main(int argc, char const *argv[])
     //unlinkShm();
 
     // Semaphore finish
-   // unlinkSem(sem);
+    unlinkSem(sem);
    // perror("master\n");
 
     return 0;

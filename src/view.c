@@ -30,7 +30,7 @@ int main(int argc, char const *argv[])
 
     }
 
-    unlinkSem(sem);
+    //unlinkSem(sem);
     
     munmapShm(data, qResults);
     unlinkShm();
