@@ -23,6 +23,6 @@ Gracias :)
 void * WR_shm(char * name, int qResults);
 void * RD_shm(char * name, int * qResults);
 void munmapShm(void * data, int qResults);
-void unlinkShm();
+void unlinkShm(char * name);
 
 #endif
