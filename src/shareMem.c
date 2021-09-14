@@ -10,12 +10,11 @@ Gracias :)
 
 */
 
-#include "shareMem.h"
-//#include <errno.h>
+#include <shareMem.h>
 
 void * WR_shm(char * name, int qResults){
 
-    int fd = shm_open(name, O_CREAT | O_RDWR, 0600); // Le saque el O_EXCL
+    int fd = shm_open(name, O_CREAT | O_RDWR, 0600); 
     if(fd<0){
         perror("smh_open() WR");
         return (void *)-1;

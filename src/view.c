@@ -1,7 +1,7 @@
 // This is a personal academic project. Dear PVS-Studio, please check it.
 // PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-#include "shareMem.h"
-#include "semaphore.h"
+#include <shareMem.h>
+#include <ourSemaphore.h> 
 #include <string.h>
 int main(int argc, char *argv[])
 {   
@@ -12,20 +12,22 @@ int main(int argc, char *argv[])
         int i =0;
         name = malloc(256);
         if(name==NULL) return EXIT_FAILURE;
+        
         char c;
         while((c=getchar())!='\n' && i<256){
             name[i]=c;
             i++;
         }
+        
     }
     
     // Share Mem.
     int qResults;
-    char * data = (char *) RD_shm(name, &qResults);
-    void * aux = (void *) data;
-    data += sizeof(int);
+    char * results = (char *) RD_shm(name, &qResults);
+    void * aux = (void *) results;
+    results += sizeof(int);
 
-    if(data==(void *)-1) 
+    if(results==(void *)-1) 
         return EXIT_FAILURE;
 
     // Semaphore
@@ -38,16 +40,14 @@ int main(int argc, char *argv[])
     {
         sem_wait(sem);
 
-        printf("%s", data);
-        data += RESULT_SIZE;
+        printf("%s", results);
+        results += RESULT_SIZE;
 
     }
-
-    //unlinkSem(sem);
     
     munmapShm(aux, qResults);
     unlinkShm(name);
-    unlinkSem(sem);
+    unlinkSem(sem, name);
 
     return 0;
 }

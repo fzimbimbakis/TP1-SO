@@ -1,149 +1,176 @@
 // This is a personal academic project. Dear PVS-Studio, please check it.
 // PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-#include "master.h"
-void initPipesStreams();
-void closePipesStreams(int qSlaves);
-void runSlaves(int qSlaves);
+#include <master.h>
+int initPipesStreams(int slaves);
+int closePipesStreams(int qSlaves);
+void closeSomeStreams(int limit);
+int runSlaves(int qSlaves);
 void fileResultsExchange(int qSlaves, int cantFiles, sem_t * sem, char * data, const char ** fileNames);
+int sendInitialFiles(int slaves, char const *argv[]);
+char * writeResults(char * data, FILE * resultsFile, sem_t * sem, int slaveToRead);
 
-    int pipeFiles[SLAVES][2];
-    int pipeResults[SLAVES][2];
-    FILE* streamFiles[SLAVES][2];
-    FILE* streamResults[SLAVES][2];
+
+    int pipeFiles[MAX_SLAVES][2];
+    int pipeResults[MAX_SLAVES][2];
+    FILE* streamFiles[MAX_SLAVES][2];
+    FILE* streamResults[MAX_SLAVES][2];
+    int slaves;
+
 
 int main(int argc, char const *argv[])
 {
+    
+    if(setvbuf(stdout, NULL, _IONBF, 0)!=0)
+        return EXIT_FAILURE;
 
     if(argc <= 1){
         perror("Debe ingresar los archivos por argumento");
         exit(5);
     }
+
+    slaves=(argc>=8)?MAX_SLAVES:argc-1;
+
     int cantFiles=argc-1;
-    // SHM start
+
+    
     // https://stackoverflow.com/questions/8257714/how-to-convert-an-int-to-string-in-c
     int pid = getpid();
     int length = snprintf( NULL, 0, "/%d", pid );
-    char* name = malloc( length + 1 );
-    if(name==NULL){
-        perror("malloc error");
-        return EXIT_FAILURE;
-    }
+    char * name = malloc(length+1);
+    if(name == NULL) return EXIT_FAILURE;
     snprintf( name, length + 1, "/%d",  pid);
-
+    
+    // SHM start
     char * data = WR_shm(name, cantFiles);
-        if((void *) -1 == data)
+    if((void *) -1 == data)
         return EXIT_FAILURE;
 
-    void * aux = data;
+    void * firstDataPtr = data; // Para el munmap
+    
     data += sizeof(int);
-    FILE* resultsFd=fopen("results.txt","w");
-    if(resultsFd==NULL){
-        perror("results.txt error");
+
+   
+
+    
+    
+    if(initPipesStreams(slaves)==EXIT_FAILURE){
+        closePipesStreams(slaves);
+        munmapShm(firstDataPtr, cantFiles);
+        free(name);
         return EXIT_FAILURE;
     }
-
-    
-    
-    initPipesStreams();
     
 
-    runSlaves(SLAVES);          // El tema de generar un stack y despues un fork cambia algo?
+    if(runSlaves(slaves)==EXIT_FAILURE){
+        closePipesStreams(slaves);
+        free(name);
+        munmapShm(firstDataPtr, cantFiles);
+        return EXIT_FAILURE;
+    }
     
 
     // Semaphore start
     sem_t * sem = getSem_WR(name);
     if(sem==SEM_FAILED){
-        closePipesStreams(SLAVES);
-        fclose(resultsFd);
+        munmapShm(firstDataPtr, cantFiles);
+        free(name);
+        closePipesStreams(slaves);
         return EXIT_FAILURE;
     }
     
+
+    // Name for view
     printf("%s\n", name);
 
-    //fileResultsExchange(SLAVES, cantFiles, sem, data, argv);
-    int contador=0;
-    int sentFiles=0;
 
-    while(contador < SLAVES && contador < cantFiles){
-        fprintf(streamFiles[contador][1],"%s", argv[++sentFiles]);
-        fprintf(streamFiles[contador][1],"\n");
-
-        fflush(streamFiles[contador][1]);
-        contador++;
-    }
+    
+    
+    int sentFiles = sendInitialFiles(slaves, argv);
   
     fd_set currentFds, readyFds;
     FD_ZERO (&currentFds);
-
-    contador=0;
-    while(contador<SLAVES){
-        FD_SET (pipeResults[contador][0], &currentFds);//agego todos los fd que
-        contador++;                                //me interesa ver
+      
+    int i;
+    for(i = 0; i < slaves; i++){
+        FD_SET (pipeResults[i][0], &currentFds);     //agego los fd que me importan                           
     }
 
-    size_t len=0;
-    char* string =NULL;
-    contador=0;
+
+     FILE* resultsFile=fopen("results.txt","w");
+        if(resultsFile==NULL){
+        free(name);
+        munmapShm(firstDataPtr, cantFiles);
+    sem_close(sem);
+        closePipesStreams(slaves);
+            perror("results.txt error");
+            return EXIT_FAILURE;
+        }
 
 
-   // printf("8 segundos para llamar a view.\n");
-    //sleep(8);
 
-    while(contador<cantFiles){//cant=cantidad de files para "minisatear"
-        readyFds=currentFds;//select me destruye el set, por eso uso un auxiliar
+    int filesLeidos=0;
 
-        //printf("Select %d\n",contador);
+    while(filesLeidos<cantFiles){
+        readyFds=currentFds;        
         
         if(select(FD_SETSIZE, &readyFds, NULL, NULL, NULL) < 0){
             perror("Error select");
+            munmapShm(firstDataPtr, cantFiles);
+            closePipesStreams(slaves);
+            sem_close(sem);
+            fclose(resultsFile);
+            free(name);
             exit(1);
         }
         
-        contador++;//lei un archivo correctamente, uno menos para ver
+        filesLeidos++;
 
-        //si llego hasta aca, entonces el select detecto algo
+        
         int i;
-        for(i=0; i < SLAVES; i++){    //pregunto por cada fd si esta en el set
+        for(i=0; i < slaves; i++){    
             if(FD_ISSET(pipeResults[i][0], &readyFds)){
                 
-                    getline(&string, &len, streamResults[i][0]);
-                    sprintf(data, "%s", string);
-                    data += RESULT_SIZE;
-                    sem_post(sem);
-                    fprintf(resultsFd, "%s", string);
+                    data = writeResults(data, resultsFile, sem, i);
                     if(sentFiles!=cantFiles){
                         fprintf(streamFiles[i][1], "%s", argv[++sentFiles]);
                         fprintf(streamFiles[i][1],"\n");
-                        fflush(streamFiles[i][1]);
                     }
-                    break;//salteo las otras comparaciones, ya lei el que quiero
+                    break;
             }
         }
     }
 
-    free(string);
+    if(closePipesStreams(slaves)==EXIT_FAILURE){
+        fclose(resultsFile);
+        sem_close(sem);
+        munmapShm(firstDataPtr, cantFiles);
+        free(name);
+        return EXIT_FAILURE;
+        }
 
-    //sleep(5);
-
-    closePipesStreams(SLAVES);
-
-    fclose(resultsFd);
-
+    fclose(resultsFile);
 
     // SHM finish
-    munmapShm(aux, cantFiles);
-    free(name);
-    //unlinkShm();
+    munmapShm(firstDataPtr, cantFiles);
 
     // Semaphore finish
     sem_close(sem);
-    //unlinkSem(sem);
-   // perror("master\n");
-
+    free(name);
     return 0;
 }
 
 
+char * writeResults(char * data, FILE * resultsFile, sem_t * sem, int slaveToRead){
+    size_t len=0;
+    char* string =NULL;
+    getline(&string, &len, streamResults[slaveToRead][0]);
+    sprintf(data, "%s", string);
+    data += RESULT_SIZE;
+    sem_post(sem);
+    fprintf(resultsFile, "%s", string);
+    free(string);
+    return data;
+}
 
 
 
@@ -153,138 +180,117 @@ int main(int argc, char const *argv[])
 
 
 
+int initPipesStreams(int slaves){
+    int i;
+    for(i=0;i<slaves;i++){
+        pipe(pipeFiles[i]);
+        pipe(pipeResults[i]);
 
-void initPipesStreams(){
-    int contador=0;
-    while(contador < SLAVES){
-        pipe(pipeFiles[contador]);
-        pipe(pipeResults[contador]);
+        streamFiles[i][READ] = fdopen(pipeFiles[i][READ], "r");
+        streamFiles[i][WRITE] = fdopen(pipeFiles[i][WRITE], "w");
 
-        streamFiles[contador][READ] = fdopen(pipeFiles[contador][0], "r");
-        streamFiles[contador][WRITE] = fdopen(pipeFiles[contador][1], "w");
+        streamResults[i][READ] = fdopen(pipeResults[i][READ], "r");
+        streamResults[i][WRITE] = fdopen(pipeResults[i][WRITE], "w");
 
-        streamResults[contador][READ] = fdopen(pipeResults[contador][0], "r");
-        streamResults[contador][WRITE] = fdopen(pipeResults[contador][1], "w");
+        
+            if(streamFiles[i][READ]==NULL) {
+                closeSomeStreams(i);
+                return EXIT_FAILURE;
+            }
+            if(streamFiles[i][WRITE]==NULL) {
+                fclose(streamFiles[i][READ]);
+                closeSomeStreams(i);
+                return EXIT_FAILURE;
+            }
+            if(streamResults[i][WRITE]==NULL) {
+                fclose(streamFiles[i][READ]);
+                fclose(streamFiles[i][WRITE]);
+                closeSomeStreams(i);
+                return EXIT_FAILURE;
+            }
+            if(streamResults[i][READ]==NULL) {
+                fclose(streamFiles[i][READ]);
+                
+                closeSomeStreams(i);
+                fclose(streamFiles[i][WRITE]);
 
-        contador++;
+                fclose(streamResults[i][WRITE]);
+                return EXIT_FAILURE;
+            }
+       
+       
+        if(setvbuf(streamFiles[i][WRITE], NULL, _IONBF, 0)!=0)
+            return EXIT_FAILURE;
+        
+    }
+    return 0;
+}
+
+void closeSomeStreams(int limit){
+    int i;
+    for(i=0; i<limit; i++){
+        fclose(streamFiles[i][0]);
+        fclose(streamFiles[i][1]);
+        fclose(streamResults[i][0]);
+        fclose(streamResults[i][1]);
     }
 }
 
-void closePipesStreams(int qSlaves){
-    int contador=0;
-    while(contador < qSlaves){
 
-        close(pipeFiles[contador][0]);
-        close(pipeFiles[contador][1]);
+int closePipesStreams(int slaves){
+    int i;
+    for(i=0;i<slaves;i++){
 
-        close(pipeResults[contador][0]);
-        close(pipeResults[contador][1]);
+        close(pipeFiles[i][0]);
+        close(pipeFiles[i][1]); 
+
+        close(pipeResults[i][0]); 
+        close(pipeResults[i][1]); 
         
         
         
         
-        fclose(streamFiles[contador][0]); //lee slave
-        fclose(streamFiles[contador][1]); //escribe master
+        fclose(streamFiles[i][0]); 
+        fclose(streamFiles[i][1]);
 
-        fclose(streamResults[contador][0]);  //lee master
-        fclose(streamResults[contador][1]); //escribe slave
+        fclose(streamResults[i][0]);
+        fclose(streamResults[i][1]);
 
-        contador++;
+        
     }
+    return 0;
 }
 
-void runSlaves(int qSlaves){
-    int contador=0;
+int runSlaves(int qSlaves){
+    int i=0;
     char * newargs = {NULL};
-    while(contador < qSlaves){
+    while(i < qSlaves){
         int pid;
         pid=fork();
         if(pid==0){
             int j=0;
             while(j<qSlaves){
                 close(pipeFiles[j][1]);
-                //fclose(streamFiles[j][1]);
-                //fclose(streamResults[j][1]);
                 j++;
             }
-            dup2(pipeFiles[contador][0],STDIN);//hijo lee en 00
-            dup2(pipeResults[contador][1],STDOUT);//hijo escribe en 11
+            dup2(pipeFiles[i][0],STDIN);
+            dup2(pipeResults[i][1],STDOUT);
 
             execv("./bin/slave",&newargs);
             perror("Fallo execv");
+            return EXIT_FAILURE;
         }
-        contador++;
+        i++;
     }
+    return 0;
 }
 
-// void writeResults(char * data, sem_t * sem, FILE * file);
-
-// void fileResultsExchange(int qSlaves, int cantFiles, sem_t * sem, char * data, const char ** fileNames){
-//     int contador=0;
-//     int sentFiles=0;
-
-//     while(contador < qSlaves && contador < cantFiles){
-//         fprintf(streamFiles[contador][1],fileNames[++sentFiles]);
-//         fprintf(streamFiles[contador][1],"\n");
-
-//         fflush(streamFiles[contador][1]);
-//         contador++;
-//     }
-  
-//     fd_set currentFds, readyFds;
-//     FD_ZERO (&currentFds);
-
-//     contador=0;
-//     while(contador<qSlaves){
-//         FD_SET (pipeResults[contador][0], &currentFds);//agego todos los fd que
-//         contador++;                                //me interesa ver
-//     }
-
-//     // size_t len=0;
-//     // char* string =NULL;
-//     contador=0;
-
-//     sleep(8); // Tiempo para llamar a view
-
-//     while(contador<cantFiles){
-        
-//         readyFds=currentFds;    //select me destruye el set, por eso uso un auxiliar
-        
-//         if(select(FD_SETSIZE, &readyFds, NULL, NULL, NULL) < 0){
-//             perror("Error select");
-//             exit(1);
-//         }
-
-//         // Select (:
-//         contador++;
-
-//         int i;
-//         for(i=0; i < qSlaves; i++){    //pregunto por cada fd si esta en el set
-            
-//             if(FD_ISSET(pipeResults[i][0], &readyFds)){
-
-//                     writeResults(data, sem, streamResults[i][0]);
-                    
-//                     if(sentFiles!=cantFiles){
-//                         fprintf(streamFiles[i][1],fileNames[++sentFiles]);
-//                         fprintf(streamFiles[i][1],"\n");
-//                         fflush(streamFiles[i][1]);
-//                     }
-
-//                     break;  //Ya leyó
-//             }
-
-//         }
-      
-
-//     }
-// }
-
-// void writeResults(char * data, sem_t * sem, FILE * file){
-//     char* string =NULL;
-//     size_t len=0;
-//     getline(&string, &len, file);
-//     sprintf(data, "%s", string);
-//     data += RESULT_SIZE;
-//     sem_post(sem);
-// }
+int sendInitialFiles(int slaves, char const *argv[]){
+int i;
+int sentFiles=0;
+for(i=0; i<slaves; i++){
+        fprintf(streamFiles[i][1],"%s", argv[++sentFiles]);
+        fprintf(streamFiles[i][1],"\n");
+    }
+    return sentFiles;
+}
