@@ -8,7 +8,11 @@ apt-get install minisat
 
 ### Compilacion 🛠️
 ```
-make all o make
+make all
+```
+o
+```
+make
 ```
 ### Ejecución 🚀
 _Se debe ejecutar el proceso aplicación primero pasandole como argumento los archivos a procesar. En este caso se colocaron todos los archivos en un directorio llamado "files", remplazar este directorio por los archivos a ana.lizar_
