@@ -10,10 +10,10 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/time.h>
-#include "shareMem.h"
-#include "semaphore.h"
+#include <shareMem.h>
+#include <ourSemaphore.h>
 
-#define SLAVES 2
+#define MAX_SLAVES 8
 #define STDIN 0
 #define STDOUT 1
 #define READ 0

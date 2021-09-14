@@ -1,5 +1,6 @@
-GCC_FLAGS= -Wall -g -Wextra -I ./include
+GCC_FLAGS= -Wall -g -Wextra -I./include
 SHMEM_SEM_FLAGS=-lrt -pthread
+
 all: master slave view
 
 master: src/master.c

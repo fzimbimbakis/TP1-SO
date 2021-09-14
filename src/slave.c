@@ -12,18 +12,9 @@
 int main()
 {
 
-     fclose(stderr);
-    char *commandOutputLine = malloc(256);
-    if(commandOutputLine==NULL){
-        perror("Malloc error");
-        return -1;
-    }
-    char *command = malloc(256);
-    if(command==NULL){
-        free(commandOutputLine);
-        perror("Malloc error");
-        return -1;
-    }
+ 
+    char commandOutputLine[256];
+    char command[256];
     char *filePath;
 
     size_t len;
@@ -35,14 +26,12 @@ int main()
                 read = getline(&filePath, &len, stdin);
                 if(read==0 || read==-1){ 
                    free(filePath);
-                   free(commandOutputLine);
-                   free(command);
                    return read;
                 }
 
 
                 strcpy(command, COMMAND_SINTAXIS);
-                command = strncat(command, filePath, 256);
+                strcat(command, filePath);
 
                 FILE *commandFilePipe = popen(command, "r");
                 FILE *grepFilePipe = popen(GREP_COMMAND, "w");
@@ -57,7 +46,7 @@ int main()
                 pclose(grepFilePipe);
                 dprintf(1, "Pid: %d\t%s", getpid(), filePath);
 
-                putchar('\n');
+                
     }
         return 0;
 }
