@@ -12,41 +12,38 @@
 int main()
 {
 
- 
     char commandOutputLine[256];
     char command[256];
     char *filePath;
 
     size_t len;
-    while (1) {
-                ssize_t read;
-                filePath=NULL;
-                len=0;
-            
-                read = getline(&filePath, &len, stdin);
-                if(read==0 || read==-1){ 
-                   free(filePath);
-                   return read;
-                }
+    while (1)
+    {
+        ssize_t read;
+        filePath = NULL;
+        len = 0;
 
+        read = getline(&filePath, &len, stdin);
+        if (read == 0 || read == -1)
+        {
+            free(filePath);
+            return read;
+        }
 
-                strcpy(command, COMMAND_SINTAXIS);
-                strcat(command, filePath);
+        strcpy(command, COMMAND_SINTAXIS);
+        strcat(command, filePath);
 
-                FILE *commandFilePipe = popen(command, "r");
-                FILE *grepFilePipe = popen(GREP_COMMAND, "w");
+        FILE *commandFilePipe = popen(command, "r");
+        FILE *grepFilePipe = popen(GREP_COMMAND, "w");
 
+        while (fgets(commandOutputLine, 256, commandFilePipe))
+        {
+            fputs(commandOutputLine, grepFilePipe);
+        }
 
-               
-                while(fgets(commandOutputLine, 256, commandFilePipe)){
-                    fputs(commandOutputLine, grepFilePipe);
-                }
-
-                pclose(commandFilePipe);
-                pclose(grepFilePipe);
-                dprintf(1, "Pid: %d\t%s", getpid(), filePath);
-
-                
+        pclose(commandFilePipe);
+        pclose(grepFilePipe);
+        dprintf(1, "Pid: %d\t%s", getpid(), filePath);
     }
-        return 0;
+    return 0;
 }
