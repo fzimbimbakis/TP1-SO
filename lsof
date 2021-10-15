@@ -1,0 +1,53 @@
+master  2310 root    1w  FIFO   0,10      0t0 35930 pipe
+master  2310 root    3r  FIFO   0,10      0t0 20061 pipe
+master  2310 root    4w  FIFO   0,10      0t0 20061 pipe
+master  2310 root    5r  FIFO   0,10      0t0 20062 pipe
+master  2310 root    6w  FIFO   0,10      0t0 20062 pipe
+master  2310 root    7r  FIFO   0,10      0t0 20063 pipe
+master  2310 root    8w  FIFO   0,10      0t0 20063 pipe
+master  2310 root    9r  FIFO   0,10      0t0 20064 pipe
+master  2310 root   10w  FIFO   0,10      0t0 20064 pipe
+master  2310 root   11r  FIFO   0,10      0t0 20065 pipe
+master  2310 root   12w  FIFO   0,10      0t0 20065 pipe
+master  2310 root   13r  FIFO   0,10      0t0 20066 pipe
+master  2310 root   14w  FIFO   0,10      0t0 20066 pipe
+master  2310 root   15r  FIFO   0,10      0t0 20067 pipe
+master  2310 root   16w  FIFO   0,10      0t0 20067 pipe
+master  2310 root   17r  FIFO   0,10      0t0 20068 pipe
+master  2310 root   18w  FIFO   0,10      0t0 20068 pipe
+master  2310 root   19r  FIFO   0,10      0t0 20069 pipe
+master  2310 root   20w  FIFO   0,10      0t0 20069 pipe
+master  2310 root   21r  FIFO   0,10      0t0 20070 pipe
+master  2310 root   22w  FIFO   0,10      0t0 20070 pipe
+
+view    2311 root    0r  FIFO   0,10      0t0 35930 pipe
+
+slave   2312 root    0r  FIFO   0,10      0t0 20061 pipe
+slave   2312 root    1w  FIFO   0,10      0t0 20062 pipe
+slave   2312 root    3r  FIFO   0,10      0t0 20061 pipe
+slave   2312 root    4r  FIFO   0,10      0t0 33240 pipe
+slave   2312 root    6w  FIFO   0,10      0t0 20062 pipe
+slave   2312 root    7w  FIFO   0,10      0t0 33241 pipe
+
+slave   2313 root    0r  FIFO   0,10      0t0 20063 pipe
+slave   2313 root    1w  FIFO   0,10      0t0 20064 pipe
+slave   2313 root    7r  FIFO   0,10      0t0 20063 pipe
+slave   2313 root   10w  FIFO   0,10      0t0 20064 pipe
+
+slave   2314 root    0r  FIFO   0,10      0t0 20065 pipe
+slave   2314 root    1w  FIFO   0,10      0t0 20066 pipe
+slave   2314 root   11r  FIFO   0,10      0t0 20065 pipe
+slave   2314 root   14w  FIFO   0,10      0t0 20066 pipe
+
+slave   2315 root    0r  FIFO   0,10      0t0 20067 pipe
+slave   2315 root    1w  FIFO   0,10      0t0 20068 pipe
+slave   2315 root   15r  FIFO   0,10      0t0 20067 pipe
+slave   2315 root   18w  FIFO   0,10      0t0 20068 pipe
+
+slave   2316 root    0r  FIFO   0,10      0t0 20069 pipe
+slave   2316 root    1w  FIFO   0,10      0t0 20070 pipe
+slave   2316 root    3r  FIFO   0,10      0t0 35932 pipe
+slave   2316 root    5w  FIFO   0,10      0t0 35933 pipe
+slave   2316 root   19r  FIFO   0,10      0t0 20069 pipe
+slave   2316 root   22w  FIFO   0,10      0t0 20070 pipe
+

@@ -263,11 +263,19 @@ int runSlaves(int qSlaves)
             int j = 0;
             while (j < qSlaves)
             {
+                if(j!=i){
+                    close(pipeFiles[j][0]);
+                    close(pipeResults[j][1]);
+                }
                 close(pipeFiles[j][1]);
+                close(pipeResults[j][0]);
                 j++;
+
             }
             dup2(pipeFiles[i][0], STDIN);
             dup2(pipeResults[i][1], STDOUT);
+            close(pipeFiles[i][0]);
+            close(pipeResults[i][1]);
 
             execv("./bin/slave", &newargs);
             perror("Fallo execv");
